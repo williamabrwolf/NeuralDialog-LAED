@@ -8,7 +8,7 @@ import json
 import logging
 from datetime import datetime
 import torch
-from nltk.tokenize.moses import MosesDetokenizer
+from sacremoses import MosesDetokenizer
 import nltk
 import sys
 from collections import defaultdict
@@ -157,4 +157,3 @@ def get_chat_tokenize():
 class missingdict(defaultdict):
     def __missing__(self, key):
         return self.default_factory()
-
