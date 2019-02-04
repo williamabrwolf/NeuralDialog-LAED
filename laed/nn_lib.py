@@ -28,7 +28,7 @@ class CatConnector(nn.Module):
         """
         :param hidden_state: [num_layer, batch_size, feat_size]
         :param inputs: [batch_size, feat_size]
-        :return: 
+        :return:
         """
         if self.rnn_cell == 'lstm':
             h, c = hidden_state
@@ -63,7 +63,7 @@ class Bi2UniConnector(nn.Module):
         """
         :param hidden_state: [num_layer, batch_size, feat_size]
         :param inputs: [batch_size, feat_size]
-        :return: 
+        :return:
         """
         if self.rnn_cell == 'lstm':
             h, c = hidden_state
@@ -147,8 +147,8 @@ class LinearConnector(nn.Module):
 
     def forward(self, inputs):
         """
-        :param inputs: batch_size x input_size 
-        :return: 
+        :param inputs: batch_size x input_size
+        :return:
         """
         if self.is_lstm:
             h = self.linear_h(inputs).unsqueeze(0)
@@ -230,6 +230,7 @@ class GumbelConnector(nn.Module):
         super(GumbelConnector, self).__init__()
 
     def sample_gumbel(self, logits, use_gpu, eps=1e-20):
+        torch.manual_seed(1)
         u = torch.rand(logits.size())
         sample = Variable(-torch.log(-torch.log(u + eps) + eps))
         sample = cast_type(sample, FLOAT, use_gpu)
@@ -302,4 +303,3 @@ class GaussianConnector(nn.Module):
         std = torch.exp(0.5 * logvar)
         z = mu + std * epsilon
         return z
-

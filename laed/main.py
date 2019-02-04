@@ -110,7 +110,9 @@ def train(model, train_feed, valid_feed, test_feed, config, evaluator, gen=None)
                 optimizer = model.get_optimizer(config)
 
             model.backward(batch_cnt, loss)
+            import pdb; pdb.set_trace()
             optimizer.step()
+
             batch_cnt += 1
             train_loss.add_loss(loss)
 
@@ -242,5 +244,3 @@ def generate(model, data_feed, config, evaluator, num_batch=1, dest_f=None):
 
     write(evaluator.get_report(include_error=dest_f is not None))
     logger.info("Generation Done")
-
-

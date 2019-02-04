@@ -145,7 +145,3 @@ class Entropy(_Loss):
             return torch.mean(h_q)
         else:
             return torch.sum(h_q) / batch_size
-
-
-
-

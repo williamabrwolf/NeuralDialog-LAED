@@ -110,6 +110,10 @@ def main(config):
     test_feed = data_loaders.SMDDataLoader("Test", test_dial, config)
     model = dialog_models.AeED(corpus_client, config)
 
+    # Load in pre-set parameters
+    sd = torch.load('/persist/git/research/will/flow-induction/laed_state_dict.torchsave')
+    model.load_state_dict(sd, strict=True)
+    
     if config.forward_only:
         test_file = os.path.join(config.log_dir, config.load_sess,
                                  "{}-test-{}.txt".format(get_time(), config.gen_type))

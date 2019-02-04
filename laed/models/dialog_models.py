@@ -22,6 +22,7 @@ class LAED(BaseModel):
     def qzx_forward(self, out_utts):
         # output encoder
         output_embedding = self.x_embedding(out_utts)
+
         x_outs, x_last = self.x_encoder(output_embedding)
         x_last = x_last.transpose(0, 1).contiguous().view(-1, self.config.dec_cell_size)
         qy_logits = self.q_y(x_last).view(-1, self.config.k)
@@ -278,6 +279,7 @@ class AeED(LAED):
     def valid_loss(self, loss, batch_cnt=None):
         vae_loss = loss.vae_nll + loss.reg_kl
         enc_loss = loss.nll
+
         if self.config.greedy_q:
             enc_loss += loss.pi_nll
         else:
@@ -304,6 +306,10 @@ class AeED(LAED):
         else:
             total_loss = vae_loss
 
+        total_loss = enc_loss
+
+        val = total_loss; print(val.size()); print(val.norm()); val.norm().backward(); grads = {n: p.grad.norm().data[0] for n, p in self.named_parameters() if p.grad is not None}; torch.save(grads, '/persist/git/research/will/flow-induction/laed_grads.torchsave'); import sys; sys.exit()
+
         return total_loss
 
     def pxz_forward(self, batch_size, results, out_utts, mode, gen_type):
@@ -323,6 +329,8 @@ class AeED(LAED):
 
         ctx_utts = self.np2var(data_feed['contexts'], LONG)
         out_utts = self.np2var(data_feed['outputs'], LONG)
+
+        out_utts, ctx_utts = torch.load('/persist/git/research/will/flow-induction/laed_batch.torchsave')
 
         # First do VAE here
         vae_resp = self.pxz_forward(batch_size, self.qzx_forward(out_utts[:, 1:]),
@@ -389,6 +397,7 @@ class AeED(LAED):
                                                    attn_context=attn_inputs,
                                                    mode=mode, gen_type=gen_type,
                                                    beam_size=self.config.beam_size)
+
         # get decoder inputs
         labels = out_utts[:, 1:].contiguous()
         dec_ctx[DecoderRNN.KEY_RECOG_LATENT] = qy_id
@@ -402,6 +411,7 @@ class AeED(LAED):
             # VAE-related Losses
             log_qy = F.log_softmax(vae_resp.qy_logits, dim=1)
             vae_nll = self.nll_loss(vae_resp.dec_outs, labels)
+            # it looks like your vae_nll is the same!
             avg_log_qy = torch.exp(log_qy.view(-1, self.config.y_size, self.config.k))
             avg_log_qy = torch.log(torch.mean(avg_log_qy, dim=0) + 1e-15)
             reg_kl = self.cat_kl_loss(avg_log_qy, self.log_uniform_y, batch_size, unit_average=True)
@@ -423,11 +433,12 @@ class AeED(LAED):
                 dec_out_embedded = dec_out_embedded.view(-1, dec_outs.size(1), self.config.embed_size)
                 valid_out_embedded = mask * dec_out_embedded + (1.0-mask) * pad_embeded
 
+
                 x_outs, x_last = self.x_encoder(valid_out_embedded)
                 x_last = x_last.transpose(0, 1).contiguous().view(-1, self.config.dec_cell_size)
                 qy_logits = self.q_y(x_last).view(-1, self.config.k)
-                attribute_nll = F.cross_entropy(qy_logits, y_id.view(-1).detach())
 
+                attribute_nll = F.cross_entropy(qy_logits, y_id.view(-1).detach())
                 _, max_qy = torch.max(qy_logits.view(-1, self.config.k), dim=1)
                 adv_err = torch.mean((max_qy != y_id.view(-1)).float())
             else:
@@ -755,4 +766,3 @@ class StED(LAED):
                 results['y_ids'] = y_id
 
             return results
-
