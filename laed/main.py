@@ -103,6 +103,7 @@ def train(model, train_feed, valid_feed, test_feed, config, evaluator, gen=None)
 
             optimizer.zero_grad()
             loss = model(batch, mode=TEACH_FORCE)
+
             if model.flush_valid:
                 logger.info("Flush previous valid loss")
                 best_valid_loss = np.inf
@@ -110,8 +111,17 @@ def train(model, train_feed, valid_feed, test_feed, config, evaluator, gen=None)
                 optimizer = model.get_optimizer(config)
 
             model.backward(batch_cnt, loss)
-            import pdb; pdb.set_trace()
             optimizer.step()
+
+            results_ = {k: v.data[0] if not k.endswith('_err') else 1 - v.data[0] for k, v in loss.items()}
+            torch.save(results_, '/persist/git/research/will/flow-induction/laed_results.torchsave')
+
+            grads = {n: p.grad.norm().data[0] for n, p in model.named_parameters() if p.grad is not None}; torch.save(grads, '/persist/git/research/will/flow-induction/laed_grads.torchsave')
+
+            params = {n: p.norm().data[0] for n, p in model.named_parameters()}; torch.save(params, '/persist/git/research/will/flow-induction/laed_params.torchsave')
+
+            if batch_cnt + 1 == config.max_epoch:  # we're just stealing this param to specify number of batches
+                import sys; sys.exit()
 
             batch_cnt += 1
             train_loss.add_loss(loss)
@@ -121,6 +131,7 @@ def train(model, train_feed, valid_feed, test_feed, config, evaluator, gen=None)
                                               prefix="{}/{}-({:.3f})".format(batch_cnt % config.ckpt_step,
                                                                          config.ckpt_step,
                                                                          model.kl_w)))
+                import pdb; pdb.set_trace()
 
             if batch_cnt % config.ckpt_step == 0:
                 logger.info("\n=== Evaluating Model ===")

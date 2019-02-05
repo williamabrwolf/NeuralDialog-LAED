@@ -28,12 +28,15 @@ class LAED(BaseModel):
         qy_logits = self.q_y(x_last).view(-1, self.config.k)
 
         # switch that controls the sampling
+        torch.manual_seed(1)
         if self.kl_w == 1.0 and self.config.greedy_q:
             sample_y, y_ids = self.greedy_cat_connector(qy_logits, self.use_gpu,
                                                         return_max_id=True)
+            # val = sample_y; print(val.size()); print(val.norm()); val.norm().backward(); grads = {n: p.grad.norm().data[0] for n, p in self.named_parameters() if p.grad is not None}; torch.save(grads, '/persist/git/research/will/flow-induction/laed_grads.torchsave')
         else:
             sample_y, y_ids = self.cat_connector(qy_logits, 1.0, self.use_gpu,
                                                  hard=not self.training, return_max_id=True)
+
 
         sample_y = sample_y.view(-1, self.config.k * self.config.y_size)
         y_ids = y_ids.view(-1, self.config.y_size)
@@ -278,7 +281,11 @@ class AeED(LAED):
 
     def valid_loss(self, loss, batch_cnt=None):
         vae_loss = loss.vae_nll + loss.reg_kl
-        enc_loss = loss.nll
+        # enc_loss = loss.nll  # this just aliases the tensor!
+        # # when you +=, it gets stored in the value of `loss.nll!`
+
+        enc_loss = 0
+        enc_loss += loss.nll
 
         if self.config.greedy_q:
             enc_loss += loss.pi_nll
@@ -288,6 +295,7 @@ class AeED(LAED):
         if self.config.use_attribute:
             enc_loss += 0.1*loss.attribute_nll
 
+        # if TRAIN_LAED:
         if batch_cnt is not None and batch_cnt > self.config.freeze_step:
             total_loss = enc_loss
             if self.kl_w == 0.0:
@@ -306,9 +314,8 @@ class AeED(LAED):
         else:
             total_loss = vae_loss
 
-        total_loss = enc_loss
-
-        val = total_loss; print(val.size()); print(val.norm()); val.norm().backward(); grads = {n: p.grad.norm().data[0] for n, p in self.named_parameters() if p.grad is not None}; torch.save(grads, '/persist/git/research/will/flow-induction/laed_grads.torchsave'); import sys; sys.exit()
+        # val = total_loss; print(val.size()); print(val.norm()); val.norm().backward(); grads = {n: p.grad.norm().data[0] for n, p in self.named_parameters() if p.grad is not None}; torch.save(grads, '/persist/git/research/will/flow-induction/laed_grads.torchsave')
+        # import sys; sys.exit()
 
         return total_loss
 

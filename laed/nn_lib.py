@@ -230,7 +230,6 @@ class GumbelConnector(nn.Module):
         super(GumbelConnector, self).__init__()
 
     def sample_gumbel(self, logits, use_gpu, eps=1e-20):
-        torch.manual_seed(1)
         u = torch.rand(logits.size())
         sample = Variable(-torch.log(-torch.log(u + eps) + eps))
         sample = cast_type(sample, FLOAT, use_gpu)
