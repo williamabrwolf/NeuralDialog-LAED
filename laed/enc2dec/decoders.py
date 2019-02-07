@@ -153,7 +153,7 @@ class DecoderRNN(BaseRNN):
         batch_size = input_var.size(0)
         output_size = input_var.size(1)
         embedded = self.embedding(input_var)
-        # embedded = self.input_dropout(embedded)  # comment out to make forward deterministic
+        embedded = self.input_dropout(embedded)  # comment out to make forward deterministic
         output, hidden = self.rnn(embedded, hidden)
 
         attn = None

@@ -122,8 +122,8 @@ class RnnUttEncoder(nn.Module):
         if self.use_attn:
             fc1 = F.tanh(self.key_w(enc_outs))
             attn = self.query(fc1).squeeze(2)
-            # attn = F.softmax(attn, attn.dim()-1).unsqueeze(2)  # comment out for stability, for now
-            attn.unsqueeze_(2)
+            attn = F.softmax(attn, attn.dim()-1).unsqueeze(2)  # comment out to make forward deterministic
+            # attn.unsqueeze_(2)
             utt_embedded = attn * enc_outs
             utt_embedded = torch.sum(utt_embedded, dim=1)
         else:
@@ -132,9 +132,6 @@ class RnnUttEncoder(nn.Module):
             utt_embedded = utt_embedded.view(-1, self.output_size)
 
         utt_embedded = utt_embedded.view(batch_size, max_ctx_lens, self.output_size)
-
-        return utt_embedded
-
 
         if return_all:
             return utt_embedded, enc_outs, enc_last, attn

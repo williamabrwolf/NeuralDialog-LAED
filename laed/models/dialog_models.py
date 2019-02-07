@@ -28,7 +28,7 @@ class LAED(BaseModel):
         qy_logits = self.q_y(x_last).view(-1, self.config.k)
 
         # switch that controls the sampling
-        torch.manual_seed(1)
+        # torch.manual_seed(1)
         if self.kl_w == 1.0 and self.config.greedy_q:
             sample_y, y_ids = self.greedy_cat_connector(qy_logits, self.use_gpu,
                                                         return_max_id=True)
@@ -337,7 +337,7 @@ class AeED(LAED):
         ctx_utts = self.np2var(data_feed['contexts'], LONG)
         out_utts = self.np2var(data_feed['outputs'], LONG)
 
-        out_utts, ctx_utts = torch.load('/persist/git/research/will/flow-induction/laed_batch.torchsave')
+        # out_utts, ctx_utts = torch.load('/persist/git/research/will/flow-induction/laed_batch.torchsave')
 
         # First do VAE here
         vae_resp = self.pxz_forward(batch_size, self.qzx_forward(out_utts[:, 1:]),

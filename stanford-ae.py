@@ -113,7 +113,9 @@ def main(config):
     # Load in pre-set parameters
     sd = torch.load('/persist/git/research/will/flow-induction/laed_state_dict.torchsave')
     model.load_state_dict(sd, strict=True)
+    import pdb; pdb.set_trace()
     
+
     if config.forward_only:
         test_file = os.path.join(config.log_dir, config.load_sess,
                                  "{}-test-{}.txt".format(get_time(), config.gen_type))
