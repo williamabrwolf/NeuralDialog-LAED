@@ -149,7 +149,7 @@ class DecoderRNN(BaseRNN):
             self.project = nn.Linear(self.hidden_size, self.output_size)
         self.function = F.log_softmax
 
-    def forward_step(self, input_var, hidden, encoder_outputs):
+    def forward_step(self, input_var, hidden, encoder_outputs, pdb):
         batch_size = input_var.size(0)
         output_size = input_var.size(1)
         embedded = self.embedding(input_var)
@@ -167,7 +167,7 @@ class DecoderRNN(BaseRNN):
 
     def forward(self, batch_size, inputs=None, init_state=None,
                 attn_context=None, mode=TEACH_FORCE, gen_type='greedy',
-                beam_size=4):
+                beam_size=4, pdb=False):
 
         # sanity checks
         ret_dict = dict()
@@ -207,7 +207,7 @@ class DecoderRNN(BaseRNN):
         back_pointers = [] # a list of parent beam ID
         lengths = np.array([self.max_length] * batch_size * beam_size)
 
-        def decode(step, cum_sum, step_output, step_attn):
+        def decode(step, cum_sum, step_output, step_attn, pdb):
             decoder_outputs.append(step_output)
             step_output_slice = step_output.squeeze(1)
 
@@ -218,6 +218,7 @@ class DecoderRNN(BaseRNN):
                 symbols = step_output_slice.topk(1)[1]
             elif gen_type == 'sample':
                 symbols = self.gumbel_max(step_output_slice)
+
             elif gen_type == 'beam':
                 if step == 0:
                     seq_score = step_output_slice.view(batch_size, -1)
@@ -257,11 +258,12 @@ class DecoderRNN(BaseRNN):
         else:
             # do free running here
             cum_sum = None
+            torch.manual_seed(1)
             for di in range(self.max_length):
                 decoder_output, decoder_hidden, step_attn = self.forward_step(
-                    decoder_input, decoder_hidden, attn_context)
+                    decoder_input, decoder_hidden, attn_context, pdb)
 
-                cum_sum, symbols = decode(di, cum_sum, decoder_output, step_attn)
+                cum_sum, symbols = decode(di, cum_sum, decoder_output, step_attn, pdb)
                 decoder_input = symbols
 
             decoder_outputs = torch.cat(decoder_outputs, dim=1)

@@ -101,7 +101,6 @@ def main(config):
     train_dial, valid_dial, test_dial = dial_corpus['train'],\
                                         dial_corpus['valid'],\
                                         dial_corpus['test']
-
     evaluator = evaluators.BleuEvaluator(os.path.basename(__file__))
 
     # create data loader that feed the deep models
@@ -113,7 +112,7 @@ def main(config):
     # Load in pre-set parameters
     sd = torch.load('/persist/git/research/will/flow-induction/laed_state_dict.torchsave')
     model.load_state_dict(sd, strict=True)
-    
+
     if config.forward_only:
         test_file = os.path.join(config.log_dir, config.load_sess,
                                  "{}-test-{}.txt".format(get_time(), config.gen_type))

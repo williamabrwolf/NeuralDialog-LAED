@@ -19,9 +19,12 @@ import numpy as np
 
 
 class LAED(BaseModel):
-    def qzx_forward(self, out_utts):
+    def qzx_forward(self, out_utts, pdb=False):
         # output encoder
         output_embedding = self.x_embedding(out_utts)
+        if pdb:
+            import pdb; pdb.set_trace()
+            
 
         x_outs, x_last = self.x_encoder(output_embedding)
         x_last = x_last.transpose(0, 1).contiguous().view(-1, self.config.dec_cell_size)
@@ -337,12 +340,11 @@ class AeED(LAED):
         ctx_utts = self.np2var(data_feed['contexts'], LONG)
         out_utts = self.np2var(data_feed['outputs'], LONG)
 
-        out_utts, ctx_utts = torch.load('/persist/git/research/will/flow-induction/laed_batch.torchsave')
+        out_utts, ctx_utts = torch.load('/persist/git/research/will/flow-induction/test/fixtures/cmu_laed_batch.torchsave')
 
         # First do VAE here
         vae_resp = self.pxz_forward(batch_size, self.qzx_forward(out_utts[:, 1:]),
                                     out_utts, mode, gen_type)
-
         # context encoder
         c_inputs = self.utt_encoder(ctx_utts)
         c_outs, c_last = self.ctx_encoder(c_inputs, ctx_lens)
@@ -378,6 +380,8 @@ class AeED(LAED):
 
                 elif gen_type == 'sample':
                     sample_y, y_id = self.greedy_cat_connector(py_logits, self.use_gpu, return_max_id=True)
+                    import pdb; pdb.set_trace()
+
                     sample_y = sample_y.view(-1, self.config.k*self.config.y_size).repeat(sample_n, 1)
                     y_id = y_id.view(-1, self.config.y_size).repeat(sample_n, 1)
                     c_last = c_last.repeat(sample_n, 1)
@@ -386,8 +390,8 @@ class AeED(LAED):
                 else:
                     raise ValueError
             else:
-                sample_y, y_id = self.cat_connector(py_logits, 1.0, self.use_gpu,
-                                                    hard=True, return_max_id=True)
+                torch.manual_seed(1)
+                sample_y, y_id = self.cat_connector(py_logits, 1.0, self.use_gpu, hard=True, return_max_id=True)
 
         # pack attention context
         if self.config.use_attn:
@@ -403,7 +407,7 @@ class AeED(LAED):
         dec_outs, dec_last, dec_ctx = self.decoder(batch_size, out_utts[:, 0:-1], dec_init_state,
                                                    attn_context=attn_inputs,
                                                    mode=mode, gen_type=gen_type,
-                                                   beam_size=self.config.beam_size)
+                                                   beam_size=self.config.beam_size, pdb=True)
 
         # get decoder inputs
         labels = out_utts[:, 1:].contiguous()

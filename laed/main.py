@@ -100,6 +100,8 @@ def train(model, train_feed, valid_feed, test_feed, config, evaluator, gen=None)
             batch = train_feed.next_batch()
             if batch is None:
                 break
+                
+            gen(model, train_feed, config, evaluator, num_batch=config.preview_batch_num)
 
             optimizer.zero_grad()
             loss = model(batch, mode=TEACH_FORCE)

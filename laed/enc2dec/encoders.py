@@ -133,9 +133,6 @@ class RnnUttEncoder(nn.Module):
 
         utt_embedded = utt_embedded.view(batch_size, max_ctx_lens, self.output_size)
 
-        return utt_embedded
-
-
         if return_all:
             return utt_embedded, enc_outs, enc_last, attn
         else:

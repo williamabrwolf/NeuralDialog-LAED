@@ -94,8 +94,8 @@ def generate_with_adv(model, data_feed, config, evaluator, num_batch=1, dest_f=N
     usr_pi_cnt = 1e-18
     usr_corr_pi_cnt = 0.0
 
-    if num_batch is not None:
-        gen_with_cond(model, data_feed, config, num_batch)
+    # if num_batch is not None:
+    #     gen_with_cond(model, data_feed, config, num_batch)
 
     data_feed.epoch_init(config, shuffle=False, verbose=False)
     while True:
@@ -143,7 +143,7 @@ def generate_with_adv(model, data_feed, config, evaluator, num_batch=1, dest_f=N
             norm_out_utts.append((1.0-seq_terminate)*t)
 
         norm_out_utts = torch.cat(norm_out_utts, dim=1)
-        qzx_results = model.qzx_forward(norm_out_utts)
+        qzx_results = model.qzx_forward(norm_out_utts, pdb=True)
         log_qy = F.log_softmax(qzx_results.qy_logits, dim=1)
 
         nll = -1.0 * log_qy.gather(1, y_ids)
@@ -326,6 +326,3 @@ def selective_generate(model, data_feed, config, selected_clusters):
 
     logger.info("In rate {}".format(in_cnt/total_cnt))
     return data
-
-
-
